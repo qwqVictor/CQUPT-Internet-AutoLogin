@@ -1,0 +1,10 @@
+{
+    "authserver": "192.168.200.2",
+    "carrier": "telecom", // telecom, cmcc, xyw
+    "account": "youraccount",
+    "password": "yourpassword",
+    "eth": "eth0",
+    "ip": null,
+    "socketBind": false,
+    "initShellCommands": null
+}
