@@ -42,16 +42,7 @@ def parse_config(config_file_path: str):
         API_URL = "http://" + config["authserver"] + API_SUFFIX
         HEADERS["Referer"] = API_URL
         if "socketBind" in config and config["socketBind"]:
-            SOCKET_BIND = True;
-        if "ip" in config and config["ip"]:
-            try:
-                ipaddress.ip_address(config["ip"])
-            except:
-                config["ip"] = None
-        if "eth" not in config and config["ip"] is None:
-            config["ip"] = get_local_ip4(authserver=config["authserver"])
-        elif "eth" in config and config["ip"] is None:
-            config["ip"] = get_local_ip4(config["eth"], authserver=config["authserver"])
+            SOCKET_BIND = True
         return config
 
 SOCK_CREATE_CONNECTION = socket.create_connection
@@ -127,6 +118,7 @@ def get_local_ip4(eth: str = None, authserver: str = None, port: int = 80):
             s = subprocess.run("ip -4 addr show dev %s | grep inet" % (eth), shell=True, stdout=subprocess.PIPE)
             ipwithcidr = s.stdout.decode().strip().split(" ")[1]
             ip = ipwithcidr.split("/")[0]
+            
         except Exception as e:
             handle_exception("get_local_ip4", e)
     return ip
