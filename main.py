@@ -1,56 +1,58 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
+import sys
 from utils import *
 
-def checkIfHaveLoggedIn(authserver: str):
+def check_if_have_logged_in(authserver: str):
     try:
-        r = sendRequest(url="http://" + authserver)
+        r = send_request(url="http://" + authserver)
         return not r.text.find("注销页") == -1
     except:
         return False
 
-def doLogin(config):
-    if not checkIfHaveLoggedIn(config["authserver"]):
+def do_login(config):
+    if not check_if_have_logged_in(config["authserver"]):
         try:
             if "initShellCommands" in config and config["initShellCommands"] is not None:
                 os.system(config["initShellCommands"])
-            stat = json.loads(stripBrackets(sendRequest(getLoginPayload(config["carrier"], config["account"], config["password"], config["ip"]), headers=HEADERS).text))
+            stat = json.loads(strip_brackets(send_request(get_login_payload(config["carrier"], config["account"], config["password"], config["ip"]), headers=HEADERS).text))
             logger("Logged in\nInfo: %s" % json.dumps(stat, ensure_ascii=False))
         except Exception as e:
-            handleException("doLogin", e)
+            handle_exception("doLogin", e)
 
-def doLogout(config):
-    if checkIfHaveLoggedIn(config["authserver"]):
+def do_logout(config):
+    if check_if_have_logged_in(config["authserver"]):
         try:
-            stat = json.loads(stripBrackets(sendRequest(getLogoutPayload(config["carrier"], config["account"], config["ip"]), headers=HEADERS)))
+            stat = json.loads(strip_brackets(send_request(get_logout_payload(config["carrier"], config["account"], config["ip"]), headers=HEADERS)))
             logger("Logged out\nInfo: %s" % json.dumps(stat, ensure_ascii=False))
         except Exception as e:
-            handleException("doLogout", e)
+            handle_exception("doLogout", e)
 
-def loginDaemonLoop(config):
+def login_daemon_loop(config):
     logger("Script started, working hard to connect to Internet.")
     while True:
-        doLogin(config)
-        time.sleep(3)
+        do_login(config)
+        time.sleep(20)
 
 def main(argv: list):
-    args = parseArgs()
+    args = parse_args()
     try:
-        configFilePath = args.config
-        assert configFilePath
+        config_file_path = args.config
+        assert config_file_path
     except:
-        configFilePath = "config.json"
+        config_file_path = "config.json"
     print("CQUPT Internet AutoLogin ver %s" % VERSION)
     print("%d (c) %s\n" % (COPYRIGHT_YEAR, AUTHOR))
-    config = parseConfig(configFilePath)
+    config = parse_config(config_file_path)
     if SOCKET_BIND:
-        if not bindSocket(config["ip"]):
+        if not bind_socket(config["ip"]):
             logger("Warning! IP invalid.\n")
     if args.logout:
-        doLogout(config)
+        do_logout(config)
         exit()
-    loginDaemonLoop(config)
+    login_daemon_loop(config)
 
 if __name__ == "__main__":
     main(sys.argv)

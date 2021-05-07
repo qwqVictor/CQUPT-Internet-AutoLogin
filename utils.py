@@ -1,9 +1,7 @@
 import requests
 import time
 import subprocess
-import os
 import json
-import sys
 import argparse
 import socket
 import ipaddress
@@ -21,7 +19,7 @@ HEADERS = {
 SOCKET_BIND = False
 IP_TO_BIND = ""
 
-def parseArgs():
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", type=str,
                         help="specify a config file")
@@ -29,16 +27,16 @@ def parseArgs():
                         help="run and logout then exit")
     return parser.parse_args()
 
-def getLogTime():
+def get_log_time():
     return "[" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "] "
 
 def logger(info: str):
     for x in info.split('\n'):
-        print(getLogTime() + x)
+        print(get_log_time() + x)
 
-def parseConfig(configFilePath: str):
+def parse_config(config_file_path: str):
     global API_URL, HEADERS, SOCKET_BIND
-    with open(configFilePath, "r") as f:
+    with open(config_file_path, "r") as f:
         config = json.load(f)
         f.close()
         API_URL = "http://" + config["authserver"] + API_SUFFIX
@@ -51,29 +49,29 @@ def parseConfig(configFilePath: str):
             except:
                 config["ip"] = None
         if "eth" not in config and config["ip"] is None:
-            config["ip"] = getLocalIP4(authserver=config["authserver"])
+            config["ip"] = get_local_ip4(authserver=config["authserver"])
         elif "eth" in config and config["ip"] is None:
-            config["ip"] = getLocalIP4(config["eth"], authserver=config["authserver"])
+            config["ip"] = get_local_ip4(config["eth"], authserver=config["authserver"])
         return config
 
 SOCK_CREATE_CONNECTION = socket.create_connection
-def setSrcAddr(*args):
+def set_src_addr(*args):
     address, timeout = args[0], args[1]
-    srcAddr = (IP_TO_BIND, 0)
-    return SOCK_CREATE_CONNECTION(address, timeout, srcAddr)
+    src_addr = (IP_TO_BIND, 0)
+    return SOCK_CREATE_CONNECTION(address, timeout, src_addr)
 
-def bindSocket(ip: str):
+def bind_socket(ip: str):
     global IP_TO_BIND
     try:
         ipaddress.ip_address(ip)
         IP_TO_BIND = ip
-        socket.create_connection = setSrcAddr
+        socket.create_connection = set_src_addr
         return True
     except:
         socket.create_connection = SOCK_CREATE_CONNECTION
         return False
 
-def getLoginPayload(carrier: str, account: str, password: str, ip: str):
+def get_login_payload(carrier: str, account: str, password: str, ip: str):
     return {
         "c": "Portal",
         "a": "login",
@@ -90,7 +88,7 @@ def getLoginPayload(carrier: str, account: str, password: str, ip: str):
         "v": 3069
     }
 
-def getLogoutPayload(carrier: str, account: str, ip: str):
+def get_logout_payload(carrier: str, account: str, ip: str):
     return {
         "c": "Portal",
         "a": "unbind_mac",
@@ -103,19 +101,19 @@ def getLogoutPayload(carrier: str, account: str, ip: str):
         "v": 7455
     }
 
-def handleException(origin, e):
+def handle_exception(origin, e):
     for i in e.args:
         logger("ERROR! [%s] Exception with information '%s'" % (origin, i))
 
-def sendRequest(payload: dict = None, headers: dict = None, url: dict = None):
+def send_request(payload: dict = None, headers: dict = None, url: dict = None):
     if url is None:
         url = API_URL
     return requests.get(url, params=payload, headers=headers)
 
-def stripBrackets(jsonp: str):
+def strip_brackets(jsonp: str):
     return jsonp[jsonp.find('(') + 1:][:-1]
 
-def getLocalIP4(eth: str = None, authserver: str = None, port: int = 80):
+def get_local_ip4(eth: str = None, authserver: str = None, port: int = 80):
     ip = ""
     if eth is None:
         if authserver is None:
@@ -130,5 +128,5 @@ def getLocalIP4(eth: str = None, authserver: str = None, port: int = 80):
             ipwithcidr = s.stdout.decode().strip().split(" ")[1]
             ip = ipwithcidr.split("/")[0]
         except Exception as e:
-            handleException("getLocalIP4", e)
+            handle_exception("get_local_ip4", e)
     return ip
