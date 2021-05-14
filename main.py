@@ -12,20 +12,24 @@ def check_if_have_logged_in(authserver: str):
     except:
         return False
 
+def get_ip(config):
+    if "ip" in config and config["ip"]:
+        try:
+            ipaddress.ip_address(config["ip"])
+        except:
+            config["ip"] = None
+    if "eth" not in config and config["ip"] is None:
+        return get_local_ip4(authserver=config["authserver"])
+    elif "eth" in config and config["ip"] is None:
+        return get_local_ip4(config["eth"], authserver=config["authserver"])
+
+
 def do_login(config):
     if not check_if_have_logged_in(config["authserver"]):
         try:
             if "initShellCommands" in config and config["initShellCommands"] is not None:
                 os.system(config["initShellCommands"])
-            if "ip" in config and config["ip"]:
-                try:
-                    ipaddress.ip_address(config["ip"])
-                except:
-                    config["ip"] = None
-            if "eth" not in config and config["ip"] is None:
-                config["ip"] = get_local_ip4(authserver=config["authserver"])
-            elif "eth" in config and config["ip"] is None:
-                config["ip"] = get_local_ip4(config["eth"], authserver=config["authserver"])
+            config["ip"] = get_ip(config)
             stat = json.loads(strip_brackets(send_request(get_login_payload(config["carrier"], config["account"], config["password"], config["ip"]), headers=HEADERS).text))
             logger("Logged in\nInfo: %s" % json.dumps(stat, ensure_ascii=False))
         except Exception as e:
@@ -34,6 +38,7 @@ def do_login(config):
 def do_logout(config):
     if check_if_have_logged_in(config["authserver"]):
         try:
+            config["ip"] = get_ip(config)
             stat = json.loads(strip_brackets(send_request(get_logout_payload(config["carrier"], config["account"], config["ip"]), headers=HEADERS).text))
             logger("Logged out\nInfo: %s" % json.dumps(stat, ensure_ascii=False))
         except Exception as e:
