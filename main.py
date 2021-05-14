@@ -34,7 +34,7 @@ def do_login(config):
 def do_logout(config):
     if check_if_have_logged_in(config["authserver"]):
         try:
-            stat = json.loads(strip_brackets(send_request(get_logout_payload(config["carrier"], config["account"], config["ip"]), headers=HEADERS)))
+            stat = json.loads(strip_brackets(send_request(get_logout_payload(config["carrier"], config["account"], config["ip"]), headers=HEADERS).text))
             logger("Logged out\nInfo: %s" % json.dumps(stat, ensure_ascii=False))
         except Exception as e:
             handle_exception("doLogout", e)
